@@ -6,23 +6,18 @@ package net.sarangnamu.common.gps;
 import java.util.List;
 import java.util.Locale;
 
-import net.sarangnamu.common.DLog;
-
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
-import android.net.http.AndroidHttpClient;
 import android.os.Handler;
 import android.os.Message;
 
-public class GeoCodeHelper extends Handler {
-    private static final String TAG = "GeoCodeHelper";
+import net.sarangnamu.common.network.BkHttp;
 
+public class GeoCodeHelper extends Handler {
     private static final String FROM_GOOGLE =
             "http://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&sensor=false&language=en";
     private static GeoCodeHelper sInst;
@@ -70,7 +65,7 @@ public class GeoCodeHelper extends Handler {
                         fromGoogle(context, gps);
                     }
                 } catch (Exception e) {
-                    DLog.e(TAG, "run");
+                    e.printStackTrace();
                 }
             }
         }).start();
@@ -89,10 +84,13 @@ public class GeoCodeHelper extends Handler {
     private void fromGoogle(Context context, GpsHelper gps) throws Exception {
         String uri = String.format(FROM_GOOGLE, gps.getLatitude(), gps.getLongitude());
 
-        AndroidHttpClient http = AndroidHttpClient.newInstance("Android");
-        JSONObject res = new JSONObject(http.execute(new HttpGet(uri), new BasicResponseHandler()));
+        BkHttp http = new BkHttp();
+        http.setMethod("GET");
+        JSONObject res = http.jsonSubmit(uri, null);
+
+//        JSONObject res = new JSONObject(http.execute(new HttpGet(uri), new BasicResponseHandler()));
         JSONArray results = (JSONArray) res.get("results");
-        http.close();
+//        http.close();
 
         for (int i = 0; i < results.length(); i++) {
             JSONObject result = results.getJSONObject(i);
