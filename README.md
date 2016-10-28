@@ -1,4 +1,5 @@
 # gps
+[![Build Status](https://travis-ci.org/aucd29/gps.svg?branch=master)](https://travis-ci.org/aucd29/gps)
 
 Add it to your build.gradle with:
 ```gradle
