@@ -13,37 +13,31 @@ import java.util.*
  * Created by <a href="mailto:aucd29@hanwha.com">Burke Choi</a> on 2017. 11. 22.. <p/>
  */
 
-interface GeoCodeListener {
-    fun onReceive(cityName: String)
-}
-
-class GeoCodeHelper {
+class GeoCodeHelper(var listener: ((String) -> Unit)? = null) {
     companion object {
         val BASE_URL = "http://maps.googleapis.com"
         val UNKNOWN  = "unknown"
     }
 
-    var listener: GeoCodeListener? = null
-
     fun fetch(gps: GpsHelper, lang: String = "ko") {
         if (Geocoder.isPresent()) {
-            fromGeocoder(gps)
+            fromGeocoder(gps, lang)
         } else {
             fromGoogle(gps, lang)
         }
     }
 
-    private fun fromGeocoder(gps: GpsHelper) {
-        val addrList = Geocoder(gps.context, Locale.US).getFromLocation(gps.latitude, gps.longitude, 1)
+    private fun fromGeocoder(gps: GpsHelper, lang: String) {
+        val addrList = Geocoder(gps.context, Locale(lang)).getFromLocation(gps.latitude, gps.longitude, 1)
 
         if (addrList.size > 0) {
-            listener?.onReceive(addrList.get(0).locality)
+            callback(addrList.get(0).locality)
         }
     }
 
     private fun fromGoogle(gps: GpsHelper, lang: String) {
         val retro = Retro.instance(BASE_URL).create(IGoogle::class.java)
-        val call = retro.geocode(gps.latitude.toString(), gps.longitude.toString(), lang)
+        val call = retro.geocode("${gps.latlng()}", lang)
         call.enqueue(object: Callback<Address> {
             override fun onResponse(call: Call<Address>?, response: Response<Address>?) {
                 response?.let {
@@ -53,24 +47,29 @@ class GeoCodeHelper {
                                 for (result in addr.results) {
                                     for (component in result.address_components) {
                                         if (component.types.get(0) == "locality") {
-                                            listener?.onReceive(component.long_name)
+                                            callback(component.long_name)
                                             return
                                         }
                                     }
                                 }
                             }
 
-                            listener?.onReceive(UNKNOWN)
+                            callback(UNKNOWN)
                         }
                     } else {
-                        listener?.onReceive(UNKNOWN)
+                        callback(UNKNOWN)
                     }
                 }
             }
 
             override fun onFailure(call: Call<Address>?, t: Throwable?) {
-                listener?.onReceive(UNKNOWN)
+                t?.printStackTrace()
+                callback(UNKNOWN)
             }
         })
+    }
+
+    private fun callback(name: String) {
+        listener?.let { it(name) }
     }
 }

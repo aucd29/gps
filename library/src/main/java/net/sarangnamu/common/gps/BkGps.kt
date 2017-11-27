@@ -1,10 +1,13 @@
 package net.sarangnamu.common.gps
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import net.sarangnamu.common.permission.runtimePermission
 import org.slf4j.LoggerFactory
 
 /**
@@ -12,7 +15,7 @@ import org.slf4j.LoggerFactory
  */
 
 // http://www.androidhive.info/2012/07/android-gps-location-manager-tutorial/
-class GpsHelper : LocationListener {
+class GpsHelper(var context: Context) : LocationListener {
     companion object {
         private val log = LoggerFactory.getLogger(GpsHelper::class.java)
 
@@ -20,21 +23,19 @@ class GpsHelper : LocationListener {
         val MIN_DISTANCE_CHANGE_FOR_UPDATES: Float = 10f
     }
 
-    protected var manager: LocationManager
+    lateinit protected var manager: LocationManager
     protected var isGpsEnabled = false
     protected var isNetworkEnabled = false
 
     var location: Location? = null
-    var context: Context
     var listener: ((Location?) -> Unit)? = null
     var canGetLocation = false
 
     var latitude: Double = 0.0
     var longitude: Double = 0.0
 
-    constructor(context: Context) {
-        this.context = context
-
+    @SuppressLint("MissingPermission")
+    private fun init() {
         manager          = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         isGpsEnabled     = manager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         isNetworkEnabled = manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
@@ -73,6 +74,10 @@ class GpsHelper : LocationListener {
         manager.removeUpdates(this)
     }
 
+    fun latlng(): String {
+        return "${latitude.toString()},${longitude.toString()}"
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // LocationListener
@@ -83,7 +88,18 @@ class GpsHelper : LocationListener {
         listener?.let { it(location) }
     }
 
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {    }
-    override fun onProviderEnabled(provider: String?) {    }
-    override fun onProviderDisabled(provider: String?) {    }
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) { }
+    override fun onProviderEnabled(provider: String?) { }
+    override fun onProviderDisabled(provider: String?) { }
+
+    init {
+        val permission = arrayListOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        context.runtimePermission(permission, { res ->
+            if (res) {
+                init()
+            } else {
+                log.error("PERMISSION DENIED")
+            }
+        })
+    }
 }

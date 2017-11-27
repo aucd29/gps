@@ -1,5 +1,8 @@
 package net.sarangnamu.common.gps.domains
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import java.io.Serializable
+
 /**
  * Created by <a href="mailto:aucd29@hanwha.com">Burke Choi</a> on 2017. 11. 22.. <p/>
  */
@@ -21,10 +24,11 @@ data class AddressComponent(
     val long_name: String,
     val short_name: String,
     val types: List<String>
-)
+) : Serializable
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Geometry(
-    val bounds: NorthEastSouthWest,
+    val bounds: NorthEastSouthWest?,
     val location: Location,
     val location_type: String,
     val viewport: NorthEastSouthWest
