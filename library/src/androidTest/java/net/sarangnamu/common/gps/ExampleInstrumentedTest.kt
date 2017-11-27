@@ -23,19 +23,4 @@ class ExampleInstrumentedTest {
         val appContext = InstrumentationRegistry.getTargetContext()
         assertEquals("net.sarangnamu.common.gps", appContext.packageName)
     }
-
-    @Test
-    fun testgps() {
-        System.out.println("== TEST GPS ==")
-
-        val context = InstrumentationRegistry.getTargetContext()
-        val gps = GpsHelper(context)
-        gps.listener = object: GpsListener {
-            override fun onChanged(location: Location?) {
-                System.out.println("GPS CHANGED")
-
-                GeoCodeHelper().fetch(gps)
-            }
-        }
-    }
 }
